@@ -31,6 +31,7 @@ abstract contract BaseERC20 is IERC20  {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
+
     constructor()  {
         name = "BaseERC20";
         symbol = "BERC20";
