@@ -7,15 +7,9 @@ interface IERC20 {
     function transferFrom(address _from, address _to, uint256 _value) external  payable returns (bool success);
     function approve(address _spender, uint256 _value) external  returns (bool success);
     function allowance(address _owner, address _spender) external  view returns (uint256 remaining);
-    // tokensReceived
-    function tokensReceived(
-        address operator,
-        address from,
-        address to,
-        uint256 amount
-    ) external;
-}
 
+}
+import "ExtendedTokenBank.sol";
 
 abstract contract BaseERC20 is IERC20  {
     string public name; 
@@ -30,7 +24,6 @@ abstract contract BaseERC20 is IERC20  {
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
-
 
     constructor()  {
         name = "BaseERC20";
@@ -53,14 +46,25 @@ abstract contract BaseERC20 is IERC20  {
     // 每次转账后调用
     function _afterTokenTransfer(
         address operator,
-        address from,
         address to,
         uint256 amount
     ) internal {
         if (isContract(to)) {
-            IERC20(to).tokensReceived(operator, from, to, amount);
+            ITokenReceiver(to).tokensReceived(operator, to, amount);
         }
     }
+
+    // 扩展回调函数的转账
+    function transferExtended(address _to, uint256 _value) public returns (bool success) {
+        require(balances[msg.sender]>= _value, "ERC20: transfer amount exceeds balance");
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        _afterTokenTransfer(address(this), _to, _value);
+        emit Transfer(msg.sender, _to, _value);  
+        return true;   
+    }
+
+
 
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
@@ -70,8 +74,7 @@ abstract contract BaseERC20 is IERC20  {
         require(balances[msg.sender]>= _value, "ERC20: transfer amount exceeds balance");
         balances[msg.sender] -= _value;
         balances[_to] += _value;
-        _afterTokenTransfer(msg.sender, address(this), _to, _value);
-        emit Transfer(msg.sender, _to, _value);  
+        emit Transfer(msg.sender, _to, _value);
         return true;   
     }
 
@@ -81,10 +84,10 @@ abstract contract BaseERC20 is IERC20  {
         balances[_from] -= _value;
         balances[_to] += _value;
         allowances[_from][msg.sender] -= _value;
-        _afterTokenTransfer(msg.sender, _from, _to, _value);
         emit Transfer(_from, _to, _value); 
         return true; 
     }
+
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowances[msg.sender][_spender] = _value;
