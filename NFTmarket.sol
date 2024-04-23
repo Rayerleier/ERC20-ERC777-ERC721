@@ -43,7 +43,8 @@ contract NFTmartket is ERC721{
     function buy(uint256 tokenId)public {
         listOfNFTs memory listing = listings[tokenId];
         require(listing.price>0, "this is not for sale");
-        require(tokenContract.transferFrom(msg.sender, listing.seller, listing.price), "Failed to transfer token.");
+        require(nftContract.ownerOf(tokenId) == address(this), "aleady selled");
+        tokenContract.transferFrom(msg.sender, listing.seller, listing.price);
         nftContract.transferFrom(listing.seller, msg.sender, tokenId);
         delete listings[tokenId];
         emit Bought(tokenId, msg.sender, listing.seller, listing.price);
