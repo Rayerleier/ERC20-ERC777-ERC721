@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 // (how many tokens are needed to purchase the NFT) and list the NFT on the NFT market.
 // buyNFT(): Implement the purchase function for NFTs,
 // where users transfer the specified token quantity and receive the corresponding NFT.
-contract NFTmartket is ERC721{
+contract NFTmartket {
 
     struct listOfNFTs{
         uint256 price;
@@ -27,7 +27,7 @@ contract NFTmartket is ERC721{
     event Bought(uint256 indexed tokenId, address buyer, address seller, uint256 price);
 
     address owner;
-    constructor(address _tokenAdress, address _nftAdress)ERC721("rayer","rain"){
+    constructor(address _tokenAdress, address _nftAdress){
         owner = msg.sender;
         tokenContract = IERC20(_tokenAdress);
         nftContract = IERC721(_nftAdress);
