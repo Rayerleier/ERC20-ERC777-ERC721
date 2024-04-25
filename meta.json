@@ -1,6 +1,15 @@
 {
-    "description": "My first NFT.", 
-    "image": "ipfs:QmSFFLNGA333x3WT5JMun2NpjFoW4FZ6MW4dGwLDk3oKKa", 
-    "name": "My Cat",
-    "attributes": [ ... ]
-  }
+  "name": "Sun Ren",
+  "description": "This is a Sun Ren picture while I playing total war: three kingdom",
+  "image": "ipfs://Qmc6sS46hYT6Wci97pWMgT8jgRXFWyWs7D137Ymquwz1Jh",
+  "attributes": [
+    {
+      "trait_type": "Rarity",
+      "value": "Rare"
+    },
+    {
+      "trait_type": "Category",
+      "value": "Artifact"
+    }
+  ]
+}
