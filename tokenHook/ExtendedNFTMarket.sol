@@ -8,12 +8,10 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 interface ITokenReceiver {
     function tokensReceived(
-        address operator,
         address from,
         address to,
         uint256 amount,
-        bytes memory userData,
-        bytes memory operatorData
+        bytes memory userData
     ) external;
     function queryPrice(uint256 tokenId) external view returns (uint256);
 }
@@ -61,30 +59,30 @@ contract NFTmartket is  ITokenReceiver{
 
     // 回调函数
     function tokensReceived(
-        address operator, // 在这里的operator是操作ERC20合约的人，即买家
-        address from,   // ERC20的合约地址
-        address to,     //  NFT买家的地址，即接收转账的地址
+        address from,   //  NFT买家
+        address to,     //  NFT卖家的地址，即接收转账的地址
         uint256 amount,     // 买家愿意支付的金额
-        bytes memory userData,
-        bytes memory operatorData)
+        bytes memory userData)
         external  {
         uint256 _tokenId = bytesToUint(userData);
         uint256 price = listings[_tokenId].price;
         address seller = listings[_tokenId].seller;
         require(seller == to, "Owner address wrong");
         require(amount >= price, "You must give enough amount");
-        tokenContract.transferFrom(operator, to, price);
-        nftContract.transferFrom(to, operator, _tokenId);
+        //需要先对资金授权，然后将资金转给卖家
+        tokenContract.transferFrom(from, to, price);
+        // nft从市场转给买家
+        nftContract.transferFrom(address(this), from, _tokenId);
         delete listings[_tokenId];
-        emit Bought(_tokenId, operator, to, price);
+        emit Bought(_tokenId, msg.sender, to, price);
     }
 
-    function bytesToUint(bytes memory b) public pure returns (uint256) {
-        require(b.length == 32, "The bytes array length must be 32.");
+    function bytesToUint(bytes memory userData) public pure returns (uint256) {
+        require(userData.length == 32, "The bytes array length must be 32.");
         uint256 numValue;  // Changed variable name from 'number' to 'numValue'
         assembly {
             // Load the 32 bytes word from memory starting at the location of `b`
-            numValue := mload(add(b, 32))
+            numValue := mload(add(userData, 32))
         }
         return numValue;
     }
