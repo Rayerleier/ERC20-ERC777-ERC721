@@ -39,24 +39,25 @@ abstract contract MyExtendedERC20  {
 
     // 每次转账后调用
     function _afterTokenTransfer(
+        address con,
         address from,
         address to,
         uint256 amount,
         bytes memory userData
     ) internal {
-        if (isContract(to)) {
-            ITokenReceiver(to).tokensReceived(from, to, amount,userData);
+        if (isContract(con)) {
+            ITokenReceiver(con).tokensReceived(from, to, amount,userData);
         }
     }
 
 
 
     // 扩展回调函数的转账
-    function transferExtended(address _to, uint256 _value, bytes memory userData) public returns (bool success) {
+    function transferExtended(address _con,address _to, uint256 _value, bytes memory userData) public returns (bool success) {
         require(balances[msg.sender]>= _value, "ERC20: transfer amount exceeds balance");
         balances[msg.sender] -= _value;
         balances[_to] += _value;
-        _afterTokenTransfer(msg.sender, _to, _value, userData);
+        _afterTokenTransfer(_con, msg.sender, _to, _value, userData);
         emit Transfer(msg.sender, _to, _value);  
         return true;   
     }
