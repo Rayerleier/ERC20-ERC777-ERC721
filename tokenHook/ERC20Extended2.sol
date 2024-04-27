@@ -1,18 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// interface IERC20 {
-//     function balanceOf(address _owner) external  view returns (uint256 balance);
-//     function transfer(address _to, uint256 _value) external  returns (bool success);
-//     function transferFrom(address _from, address _to, uint256 _value) external  payable returns (bool success);
-//     function approve(address _spender, uint256 _value) external  returns (bool success);
-//     function allowance(address _owner, address _spender) external  view returns (uint256 remaining);
-// }
-
 
 import "ExtendedNFTMarket.sol";
 
-abstract contract MyERC20  {
+abstract contract MyExtendedERC20  {
     string public name; 
     string public symbol; 
     uint8 public decimals; 
@@ -26,15 +18,13 @@ abstract contract MyERC20  {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
-    ITokenReceiver NFTcontract;
-
-    constructor(address NFTmarket)  {
+    constructor()  {
         name = "BaseERC20";
         symbol = "BERC20";
         decimals = 18;
         totalSupply = 100000000 * 10 ** uint256(decimals); 
         balances[msg.sender] = totalSupply;
-        NFTcontract = ITokenReceiver(NFTmarket);
+
     }
 
     // 判断是否为合约
@@ -48,24 +38,28 @@ abstract contract MyERC20  {
 
     // 每次转账后调用
     function _afterTokenTransfer(
+        address operator,
         address from,
         address to,
         uint256 amount,
-        uint256 tokenId
+        bytes memory userData,
+        bytes memory operatorData
     ) internal {
-       
-        NFTcontract.tokensReceived(from, to, amount, tokenId);
-        
+        if (isContract(to)) {
+            ITokenReceiver(to).tokensReceived(operator,from, to, amount,userData,operatorData);
+        }
     }
 
-    // 扩展回调函数, 购买指定NFT
-    function transferExtended(address _to,  uint256 tokenId) public returns (bool success) {
-        uint256 price = NFTcontract.queryPrice(tokenId);
-        require(price<= balances[msg.sender], "Not enough balance for NFT");
-        balances[msg.sender] -= price;
-        _afterTokenTransfer(msg.sender, _to, price, tokenId);
+    // 扩展回调函数的转账
+    function transferExtended(address _to, uint256 _value, bytes memory userData, bytes memory operatorData) public returns (bool success) {
+        require(balances[msg.sender]>= _value, "ERC20: transfer amount exceeds balance");
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        _afterTokenTransfer(address(this), msg.sender, _to, _value, userData , operatorData);
+        emit Transfer(msg.sender, _to, _value);  
         return true;   
     }
+
 
 
     function balanceOf(address _owner) public view returns (uint256 balance) {
@@ -76,7 +70,7 @@ abstract contract MyERC20  {
         require(balances[msg.sender]>= _value, "ERC20: transfer amount exceeds balance");
         balances[msg.sender] -= _value;
         balances[_to] += _value;
-        emit Transfer(msg.sender, _to, _value);  
+        emit Transfer(msg.sender, _to, _value);
         return true;   
     }
 
@@ -90,6 +84,7 @@ abstract contract MyERC20  {
         return true; 
     }
 
+
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowances[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value); 
@@ -99,4 +94,6 @@ abstract contract MyERC20  {
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {  
         return allowances[_owner][_spender];
     }
+
+
 }
