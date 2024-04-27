@@ -45,24 +45,20 @@ abstract contract BaseERC20 is IERC20  {
 
     // 每次转账后调用
     function _afterTokenTransfer(
-        address operator,
-        address from,
         address to,
-        uint256 amount,
-        bytes memory userData,
-        bytes memory operatorData
+        uint256 amount
     ) internal {
         if (isContract(to)) {
-            ITokenReceiver(to).tokensReceived(operator,from, to, amount,userData,operatorData);
+            ITokenReceiver(to).tokensReceived( to, amount);
         }
     }
 
     // 扩展回调函数的转账
-    function transferExtended(address _to, uint256 _value, bytes memory userData, bytes memory operatorData) public returns (bool success) {
+    function transferExtended(address _to, uint256 _value) public returns (bool success) {
         require(balances[msg.sender]>= _value, "ERC20: transfer amount exceeds balance");
         balances[msg.sender] -= _value;
         balances[_to] += _value;
-        _afterTokenTransfer(address(this), msg.sender, _to, _value, userData , operatorData);
+        _afterTokenTransfer( _to, _value);
         emit Transfer(msg.sender, _to, _value);  
         return true;   
     }

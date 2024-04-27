@@ -10,17 +10,13 @@ pragma solidity ^0.8.0;
 // Enter your code or github link in the answer box.
 interface ITokenReceiver {
     function tokensReceived(
-        address operator,
-        address from,
         address to,
-        uint256 amount,
-        bytes calldata userData,
-        bytes calldata operatorData
-    ) external;
+        uint256 amount
+    ) external returns (bool);
 }
 
 
-abstract contract TokenBank is ITokenReceiver{
+contract TokenBank is ITokenReceiver{
     mapping (address => mapping (address=>uint256)) balances;
     address admin;
 
@@ -33,18 +29,32 @@ abstract contract TokenBank is ITokenReceiver{
         _;
     }
 
+    modifier OnlyContract(address account){
+        require(isContract(account), "Only Contract");
+        _;
+    }
+
+    // 判断是否为合约
+    function isContract(address account) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
+    }
+
     event Deposited(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
 
 
     // Extend TokenBank to implement deposits using the transfer callback from the previous question.
     function tokensReceived(
-        address operator,
         address to,
         uint256 amount)
-        external  {
-        balances[operator][to] += amount;
+        external OnlyContract(msg.sender) returns (bool){
+        balances[msg.sender][to] += amount;
         emit Deposited(to, amount);
+        return true;
     }
 
     function deposit(address _constractAdress, uint256 _amount)public returns (bool){
